@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4"><div><p class="eyebrow mb-1">OVERVIEW</p><h2 class="mb-0">Maintenance dashboard</h2><div class="text-secondary">Hospital equipment operations at a glance</div></div><span class="badge text-bg-light p-2">Today: {{ now_date if now_date else '' }}</span></div>
+<div class="row g-3 mb-4">
+{% for label,value,icon in [('Total equipment',equipment_count,'biotech'),('Available',available_count,'check-circle'),('Due / overdue PM',due,'calendar'),('Open breakdowns',open_tickets,'tools'),('Low-stock parts',low_stock,'inventory')] %}
+<div class="col-6 col-xl"><div class="metric-card"><div class="metric-label">{{ label }}</div><div class="metric-value">{{ value }}</div></div></div>{% endfor %}
+</div>
+<div class="row g-3"><div class="col-xl-7"><div class="panel"><div class="panel-heading"><h5>Recent breakdown requests</h5><a href="{{ url_for('maintenance.index') }}">View all</a></div>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Equipment</th><th>Issue</th><th>Priority</th><th>Status</th></tr></thead><tbody>
+{% for t in recent %}<tr><td>{{ t.equipment.asset_code }}</td><td>{{ t.issue_description|truncate(42) }}</td><td><span class="badge text-bg-{{ 'danger' if t.priority in ['HIGH','CRITICAL'] else 'warning' }}">{{ t.priority }}</span></td><td>{{ t.status }}</td></tr>{% else %}<tr><td colspan="4" class="text-secondary">No breakdowns recorded.</td></tr>{% endfor %}
+</tbody></table></div></div></div>
+<div class="col-xl-5"><div class="panel"><div class="panel-heading"><h5>Upcoming maintenance</h5><a href="{{ url_for('maintenance.index') }}">Schedule</a></div>
+{% for m in upcoming %}<div class="upcoming-row"><div><strong>{{ m.equipment.name }}</strong><div class="small text-secondary">{{ m.maintenance_type }} · {{ m.equipment.asset_code }}</div></div><span class="badge text-bg-light">{{ m.scheduled_date }}</span></div>{% else %}<p class="text-secondary">No upcoming schedules.</p>{% endfor %}
+</div></div></div>
+{% endblock %}

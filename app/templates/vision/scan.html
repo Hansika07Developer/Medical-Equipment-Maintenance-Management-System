@@ -1,0 +1,39 @@
+{% extends "base.html" %}{% block content %}
+<h2>QR equipment scanner</h2>
+<p class="text-secondary">Scan an MEMMS equipment label with your camera or upload a QR image for OpenCV decoding.</p>
+<div class="row g-3"><div class="col-lg-6"><div class="panel">
+<h5>Live camera scanner</h5><div id="reader" style="max-width:520px"></div>
+<div id="scan-result" class="mt-3" aria-live="polite">Camera scanner is ready.</div>
+</div></div><div class="col-lg-6"><div class="panel">
+<h5>Decode QR image (OpenCV)</h5><form id="upload-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input class="form-control mb-3" type="file" name="image" accept="image/*" required>
+<button class="btn btn-primary">Decode image</button></form><div id="upload-result" class="mt-3" aria-live="polite"></div>
+</div></div></div>
+{% endblock %}
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+const resultBox = document.getElementById('scan-result');
+async function lookup(payload, target) {
+ const body = new URLSearchParams({payload});
+ const r = await fetch('{{ url_for("vision.lookup_qr") }}', {method:'POST',
+  headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':'{{ csrf_token() }}'}, body});
+ const d = await r.json();
+ target.innerHTML = r.ok ? `<div class="alert alert-success"><b>${d.asset_code}</b> — ${d.name}<br>Status: ${d.status}<br>Location: ${d.location || 'Not set'}</div>` : `<div class="alert alert-warning">${d.error}</div>`;
+}
+if (window.Html5Qrcode) {
+ const scanner = new Html5Qrcode("reader");
+ scanner.start({facingMode:"environment"}, {fps:10, qrbox:{width:240,height:240}},
+  async text => { await scanner.stop(); await lookup(text,resultBox); })
+  .catch(() => { resultBox.textContent="Camera unavailable. Check permissions or use image upload."; });
+} else { resultBox.textContent="Camera library unavailable. Use image upload."; }
+document.getElementById('upload-form').addEventListener('submit', async e => {
+ e.preventDefault();
+ const r = await fetch('{{ url_for("vision.decode_image") }}', {method:'POST',
+  headers:{'X-CSRFToken':'{{ csrf_token() }}'}, body:new FormData(e.currentTarget)});
+ const d = await r.json();
+ document.getElementById('upload-result').innerHTML = r.ok
+  ? `<div class="alert alert-success"><b>${d.asset_code}</b> — ${d.name}<br>Status: ${d.status}</div>`
+  : `<div class="alert alert-warning">${d.error}</div>`;
+});
+</script>{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block content %}
+<h2>{{ 'Edit equipment' if item else 'Register equipment' }}</h2><div class="panel mt-3"><form method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="row g-3">
+{% for field,label,required in [('asset_code','Asset code',true),('name','Equipment name',true),('category','Category',false),('manufacturer','Manufacturer',false),('model','Model',false),('serial_number','Serial number',false),('location','Location',false),('maintenance_interval_days','PM interval (days)',false)] %}
+<div class="col-md-6"><label class="form-label">{{ label }}</label><input class="form-control" name="{{ field }}" value="{{ (item|attr(field)) if item else '' }}" {% if required %}required{% endif %} {% if field=='maintenance_interval_days' %}type="number" min="1"{% endif %}></div>{% endfor %}
+<div class="col-md-6"><label class="form-label">Department ID</label><input class="form-control" type="number" name="department_id" value="{{ item.department_id if item else '' }}" placeholder="Optional numeric ID"></div>
+<div class="col-md-6"><label class="form-label">Status</label><select class="form-select" name="status">{% for s in ['AVAILABLE','UNDER_MAINTENANCE','OUT_OF_SERVICE','RETIRED'] %}<option {% if item and item.status==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+</div><div class="mt-4"><button class="btn btn-primary">Save equipment</button> <a class="btn btn-light" href="{{ url_for('equipment.list_equipment') }}">Cancel</a></div></form></div>{% endblock %}
